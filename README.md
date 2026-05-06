@@ -1,9 +1,13 @@
 # Navojit Auth Universe 🛡️
 
-The ultimate sovereign authentication ecosystem. High-performance, Rust-powered security engines designed for every major platform.
+The ultimate sovereign authentication ecosystem. High-performance, Rust-powered security engines designed for every major platform. 
+
+Navojit Auth Universe provides enterprise-grade, zero-knowledge authentication. By leveraging **Rust** and **WebAssembly**, we bring native-level security and speed to high-level environments like Node.js, Flutter, and Python.
+
+---
 
 ## 🚀 The Vision
-Navojit Auth Universe provides enterprise-grade, zero-knowledge authentication. By leveraging **Rust** and **WebAssembly**, we bring native-level security and speed to high-level environments like Node.js, Flutter, and Python.
+Our goal is to eliminate the trade-off between security and performance. Developed by **Navojit Technologies**, this universe offers a standardized way to handle identity management across diverse tech stacks using a single, hardened Rust core.
 
 ---
 
@@ -22,19 +26,26 @@ Explore the specific implementation for your platform:
 
 ## 🛠️ Key Architectural Pillars
 
-1. **Sovereign Security:** Users own their data. Our zero-knowledge architecture ensures tokens are signed without exposing sensitive keys to the main execution thread.
-2. **Rust-Powered:** All heavy lifting is done in Rust, ensuring memory safety and preventing common vulnerabilities.
-3. **Cross-Platform Consistency:** Use the same auth logic across your web, mobile, and backend apps.
+1.  **Sovereign Security:** Users own their data. Our zero-knowledge architecture ensures tokens are signed without exposing sensitive keys to the main execution thread.
+2.  **Rust-Powered:** All heavy lifting is done in Rust, ensuring memory safety and preventing common vulnerabilities.
+3.  **Cross-Platform Consistency:** Use the same auth logic across your web, mobile, and backend apps for a unified developer experience.
+
+---
 
 ## 📚 Documentation & Wiki
 
-For detailed integration guides, API references, and security whitepapers, please visit our **[GitHub Wiki](../../wiki)**.
+For detailed integration guides, API references, and security whitepapers, please visit our **[GitHub Wiki](https://github.com/kashishsinghrai/navojit-auth-universe/wiki)**.
 
-- [Node.js Setup Guide](../../wiki/NodeJS-Setup)
-- [Flutter Integration](../../wiki/Flutter-Integration)
-- [Rust Engine Core Specs](../../wiki/Rust-Core)
+### 📖 Quick Links:
+*   🚀 [Node.js Setup Guide](https://github.com/kashishsinghrai/navojit-auth-universe/wiki/Node.js-Setup-Guide)
+*   📱 [Flutter Integration](https://github.com/kashishsinghrai/navojit-auth-universe/wiki/Flutter-Integration)
+*   ⚙️ [Rust Engine Core Specs](https://github.com/kashishsinghrai/navojit-auth-universe/wiki/Rust-Engine-Core-Specs)
+
+---
+
+## 👨‍💻 About the Founder
+**Kashish Singh** (Founder of Navojit Technologies) is a Software Developer focused on building secure, scalable infrastructure. Under his leadership, Navojit Technologies is bridging the gap between low-level performance and high-level application development.
 
 ## 📄 License
-
 All packages within this universe are licensed under the **MIT License**.
-Copyright (c) 2026 Navojit Technologies.
+Copyright (c) 2026 **Navojit Technologies**.
