@@ -1,0 +1,39 @@
+[package]
+name = "navojit-auth"
+version = "4.0.0"
+edition = "2021"
+description = "Universal Sovereign Auth Engine for Navojit Ecosystem"
+authors = ["Kashish Singh"]
+
+[lib]
+name = "navojit_auth"
+crate-type = ["cdylib", "rlib", "staticlib"]
+
+[dependencies]
+# Common Dependencies (Donno ke liye)
+jsonwebtoken = "9.3.0"
+serde = { version = "1.0", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.10.0", features = ["v4", "serde", "js"] }
+anyhow = "1.0.102"
+flutter_rust_bridge = "=2.12.0"
+
+# --- Conditional Dependencies ---
+
+# Jab target WASM na ho (Matlab Python/Maturin build)
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+#pyo3 = { version = "0.19.0", features = ["extension-module"] }
+flutter_rust_bridge = "=2.12.0"
+# Jab target WASM ho (Matlab JS/wasm-pack build)
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = 'abort'
+
+[[bin]]
+name = "navojit-auth-cli"
+path = "src/main.rs"

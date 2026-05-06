@@ -1,0 +1,4 @@
+# Navojit Sovereign Core - FRB v2 Config
+rust_input: "crate::api"
+rust_root: "."
+dart_output: "../navojit_auth_flutter/lib/src/rust"

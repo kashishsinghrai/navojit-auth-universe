@@ -1,0 +1,60 @@
+{
+  "name": "@navojit/auth",
+  "version": "4.0.0",
+  "description": "The World's Smartest Universal Sovereign Auth Engine. Powered by Rust, serving JS.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "pkg"
+  ],
+  "scripts": {
+    "build:wasm": "cd ../navojit-auth-rs && wasm-pack build --target nodejs --out-dir ../navojit-auth/pkg",
+    "build:ts": "tsup src/index.ts --format cjs,esm --dts --clean --external express --external fastify",
+    "copy:wasm": "node -e \"require('fs').copyFileSync('pkg/navojit_auth_bg.wasm', 'dist/navojit_auth_bg.wasm')\"",
+    "build": "npm run build:wasm && npm run build:ts && npm run copy:wasm",
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "navojit",
+    "sovereign-auth",
+    "rust-wasm",
+    "fastify",
+    "auth",
+    "passkeys",
+    "identity"
+  ],
+  "author": "Kashish Singh",
+  "license": "MIT",
+  "dependencies": {
+    "@simplewebauthn/server": "^13.3.0",
+    "argon2": "^0.44.0",
+    "dotenv": "^17.4.1",
+    "uuid": "^13.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@simplewebauthn/types": "^12.0.0",
+    "@types/node": "^22.19.17",
+    "@types/uuid": "^10.0.0",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.4",
+    "wasm-pack": "^0.13.1"
+  },
+  "peerDependencies": {
+    "fastify": ">=4.0.0",
+    "drizzle-orm": ">=0.30.0"
+  }
+}

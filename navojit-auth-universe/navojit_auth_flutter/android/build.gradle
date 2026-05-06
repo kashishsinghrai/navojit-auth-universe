@@ -1,0 +1,41 @@
+group 'com.navojit.auth'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    ext.kotlin_version = '1.8.22'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    namespace "com.navojit.auth"
+    compileSdkVersion 33
+
+    defaultConfig {
+        minSdkVersion 21
+    }
+
+    // ✅ Syncing Java & Kotlin Targets
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    // Java 17 ke liye standard library
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}

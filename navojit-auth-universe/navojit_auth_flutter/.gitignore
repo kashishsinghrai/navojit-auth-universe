@@ -1,0 +1,40 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Flutter/Dart/Pub related
+/pubspec.lock
+**/doc/api/
+.dart_tool/
+.flutter-plugins-dependencies
+/build/
+/coverage/
+
+# ✅ RUST SPECIFIC (Zaroori hai!)
+# Iske bina GitHub par junk upload ho jayega
+/target/
+**/target/
+Cargo.lock
+
+# ✅ Rust Bridge generated files
+# Agar tum binaries package ke saath de rahe ho toh theek hai, 
+# warna generated code ko ignore kar sakte ho.
+# flutter_rust_bridge_generated.io.dart
+# flutter_rust_bridge_generated.web.dart
+
+# VS Code
+.vscode/

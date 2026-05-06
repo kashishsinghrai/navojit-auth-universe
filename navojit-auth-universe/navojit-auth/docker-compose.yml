@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: YourStrongPassword
+      POSTGRES_DB: navojit_auth
+    ports:
+      - "5432:5432"
+
+  auth-engine:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:YourStrongPassword@db:5432/navojit_auth
+      JWT_SECRET: global-auth-key-2026
+    depends_on:
+      - db

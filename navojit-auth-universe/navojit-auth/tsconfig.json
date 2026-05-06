@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    /* Base Options */
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    
+    /* Type Safety & Standards */
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Path Mapping (Modern Way: No baseUrl needed) */
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*", "tests"],
+  "exclude": [
+    "node_modules", 
+    "dist", 
+    "example", 
+    "drizzle", 
+    "drizzle.config.ts",
+    "**/*.test.ts"
+  ]
+}

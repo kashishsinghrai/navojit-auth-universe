@@ -1,0 +1,42 @@
+name: navojit_auth_flutter
+description: "A high-performance, Rust-powered Sovereign Authentication Engine for Flutter. Features zero-jank JWT generation, anti-reverse engineering security, and hardware biometric locks."
+version: 4.0.4
+homepage: https://navojit.com
+repository: https://github.com/kashishsinghrai/navojit-auth-universe
+issue_tracker: https://github.com/kashishsinghrai/navojit-auth-universe/issues
+
+environment:
+  sdk: ^3.10.7
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Security & Logic
+  dart_jsonwebtoken: ^2.14.0
+  uuid: ^4.3.3
+  
+  # Storage & Biometrics
+  flutter_secure_storage: ^9.0.0
+  local_auth: ^2.1.8 
+  
+  # The Bridge
+  flutter_rust_bridge: ^2.12.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  
+  # Plugin Metadata
+  plugin:
+    platforms:
+      android:
+        package: com.navojit.auth
+        pluginClass: NavojitAuthPlugin
+      windows:
+        pluginClass: NavojitAuthPlugin
