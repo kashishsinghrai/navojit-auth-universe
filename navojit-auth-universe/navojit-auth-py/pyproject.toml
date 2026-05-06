@@ -1,0 +1,24 @@
+[build-system]
+# Ye line Maturin ko engine ki tarah use karne ke liye zaroori hai
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "navojit-auth"
+version = "4.0.0"
+description = "High-performance Sovereign Identity Engine for Navojit Ecosystem"
+requires-python = ">=3.7"
+authors = [
+    { name = "Kashish Singh" }
+]
+# Agar README file hai toh uska link
+readme = "README.md"
+license = { text = "MIT" }
+
+[tool.maturin]
+# Ye line batati hai ki Rust code kis folder mein hai
+# Agar tumhara Python folder aur Rust folder side-by-side hain
+manifest-path = "../navojit-auth-rs/Cargo.toml"
+# Python module ka naam jo user import karega
+module-name = "navojit_auth.navojit_auth"
+bindings = "pyo3"

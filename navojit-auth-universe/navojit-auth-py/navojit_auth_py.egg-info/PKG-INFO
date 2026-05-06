@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: navojit-auth-py
+Version: 4.0.0
+Summary: Universal Global Auth Engine for Navojit Ecosystem
+Author: Kashish Singh
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Requires-Dist: PyJWT>=2.8.0
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: requires-dist
+Dynamic: summary
+
+High-performance, cross-language authentication engine.
