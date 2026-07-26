@@ -1,6 +1,6 @@
 {
   "name": "@navojit/auth",
-  "version": "4.1.2",
+  "version": "4.1.4",
   "description": "The World's Smartest Universal Sovereign Auth Engine. Powered by Rust, serving JS.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "build:wasm": "cd ../navojit-auth-rs && wasm-pack build --target nodejs --out-dir ../navojit-auth/pkg",
-    "build:ts": "tsup src/index.ts --format cjs,esm --dts --clean --external express --external fastify",
+    "build:ts": "tsup src/index.ts --format cjs,esm --dts --clean --external express --external fastify --shims",
     "copy:wasm": "node -e \"require('fs').copyFileSync('pkg/navojit_auth_bg.wasm', 'dist/navojit_auth_bg.wasm')\"",
     "build": "npm run build:wasm && npm run build:ts && npm run copy:wasm",
     "dev": "tsx watch src/index.ts",
