@@ -1,0 +1,25 @@
+# Node / TS (navojit-auth)
+node_modules/
+dist/
+pkg/
+.env
+
+# Flutter (navojit_auth_flutter)
+build/
+.dart_tool/
+.pub-cache/
+.packages
+.gradle/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Rust (navojit-auth-rs)
+target/
+
+# Python (navojit-auth-py)
+__pycache__/
+venv/
+*.egg-info/
+
+# OS Files
+.DS_Store

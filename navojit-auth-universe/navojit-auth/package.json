@@ -1,6 +1,6 @@
 {
   "name": "@navojit/auth",
-  "version": "4.0.0",
+  "version": "4.1.2",
   "description": "The World's Smartest Universal Sovereign Auth Engine. Powered by Rust, serving JS.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -37,9 +37,14 @@
   "author": "Kashish Singh",
   "license": "MIT",
   "dependencies": {
+    "@fastify/jwt": "^10.2.0",
     "@simplewebauthn/server": "^13.3.0",
     "argon2": "^0.44.0",
     "dotenv": "^17.4.1",
+    "google-auth-library": "^10.9.0",
+    "next": "^16.2.11",
+    "postgres": "^3.4.9",
+    "resend": "^6.18.0",
     "uuid": "^13.0.0",
     "zod": "^4.3.6"
   },
@@ -54,7 +59,7 @@
     "wasm-pack": "^0.13.1"
   },
   "peerDependencies": {
-    "fastify": ">=4.0.0",
-    "drizzle-orm": ">=0.30.0"
+    "drizzle-orm": ">=0.30.0",
+    "fastify": "^5.10.0"
   }
 }

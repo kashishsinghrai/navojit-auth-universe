@@ -742,10 +742,19 @@ ${val.stack}`;
 // src/index.ts
 var index_exports = {};
 __export(index_exports, {
+  CredentialsProvider: () => CredentialsProvider,
+  DrizzleAdapter: () => DrizzleAdapter,
+  GoogleProvider: () => GoogleProvider,
   MongooseAdapter: () => MongooseAdapter,
-  NavojitAuth: () => NavojitAuth
+  NavojitAuth: () => NavojitAuth,
+  OTPProvider: () => OTPProvider,
+  attachFastifyAuth: () => attachFastifyAuth,
+  createExpressAuthRouter: () => createExpressAuthRouter,
+  createNextAuthHandler: () => createNextAuthHandler
 });
 module.exports = __toCommonJS(index_exports);
+
+// src/core/auth.ts
 var import_uuid = require("uuid");
 var import_server = require("@simplewebauthn/server");
 var argon2 = __toESM(require("argon2"));
@@ -753,14 +762,16 @@ var wasm2 = require_navojit_auth();
 var NavojitAuth = class {
   config;
   enclave;
-  constructor(config) {
+  constructor(config2) {
     this.config = {
       prefix: "/auth",
-      ...config
+      ...config2
     };
     this.enclave = new wasm2.SovereignEnclave(this.config.secret);
   }
-  // 🚀 CORE 1: SOVEREIGN TOKENS
+  getConfig() {
+    return this.config;
+  }
   generateOmniTokens(user, options = {}) {
     const userId = (user.id || user._id || "").toString();
     const email = user.email || "";
@@ -779,7 +790,6 @@ var NavojitAuth = class {
     }
     return claims;
   }
-  // 👁️ CORE 2: BIOMETRICS & PASSKEYS
   async generatePasskeyOptions(userId, userEmail, rpID = "navojit.com") {
     return (0, import_server.generateRegistrationOptions)({
       rpName: "Navojit Ecosystem",
@@ -805,7 +815,6 @@ var NavojitAuth = class {
       return { verified: false, error: error.message };
     }
   }
-  // 🔐 CORE 3: CRYPTO UTILS
   async hashPassword(password) {
     return await argon2.hash(password);
   }
@@ -825,63 +834,241 @@ var NavojitAuth = class {
     }
     return user;
   }
-  // ==========================================
-  // 3. CONNECTORS
-  // ==========================================
-  async attach(server) {
-    const { prefix, adapter } = this.config;
-    server.post(`${prefix}/otp/verify`, async (req, reply) => {
-      try {
-        const user = await this.verifyAndFetchUser(
-          req.body.email,
-          req.body.otp
-        );
-        const tokens = this.generateOmniTokens(user, {
-          mfa_v: true,
-          am: ["otp"]
-        });
-        return { success: true, ...tokens, gateway: "navojit-v4-rust-fastify" };
-      } catch (e) {
-        return reply.code(400).send({ error: e.message });
-      }
+  async verifyOtpCore(email, otp) {
+    const user = await this.verifyAndFetchUser(email, otp);
+    const tokens = this.generateOmniTokens(user, {
+      mfa_v: true,
+      am: ["otp"]
     });
-    server.addHook("preHandler", async (req, reply) => {
-      if (req.url?.startsWith(`${prefix}/profile`)) {
-        const token = req.headers.authorization?.split(" ")[1];
-        if (!token) return reply.code(401).send({ error: "Missing Token" });
-        const decoded = this.verifyToken(token);
-        if (decoded.error)
-          return reply.code(401).send({ error: decoded.error });
-        req.user = decoded;
-      }
-    });
-  }
-  express() {
-    const { Router } = require("express");
-    const router = Router();
-    const { prefix } = this.config;
-    router.post(`${prefix}/otp/verify`, async (req, res) => {
-      try {
-        const user = await this.verifyAndFetchUser(
-          req.body.email,
-          req.body.otp
-        );
-        const tokens = this.generateOmniTokens(user, {
-          mfa_v: true,
-          am: ["otp"]
-        });
-        res.json({
-          success: true,
-          ...tokens,
-          gateway: "navojit-v4-rust-express"
-        });
-      } catch (e) {
-        res.status(400).json({ error: e.message });
-      }
-    });
-    return router;
+    return { success: true, ...tokens };
   }
 };
+
+// src/core/providers.ts
+var import_argon2 = __toESM(require("argon2"));
+var import_google_auth_library = require("google-auth-library");
+var import_resend = require("resend");
+var resend = new import_resend.Resend(process.env.RESEND_API_KEY);
+var CredentialsProvider = class {
+  constructor(adapter) {
+    this.adapter = adapter;
+  }
+  adapter;
+  id = "credentials";
+  name = "Email/Password";
+  async handle(body) {
+    const { email, password, orgId } = body;
+    const user = await this.adapter.getUserByEmail(email, orgId);
+    if (user && await import_argon2.default.verify(user.passwordHash, password)) {
+      return user;
+    }
+    return null;
+  }
+};
+var GoogleProvider = class {
+  constructor(adapter) {
+    this.adapter = adapter;
+  }
+  adapter;
+  id = "google";
+  name = "Google";
+  client = new import_google_auth_library.OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  async handle(body) {
+    const { idToken, orgId } = body;
+    try {
+      const ticket = await this.client.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID
+      });
+      const payload = ticket.getPayload();
+      if (!payload || !payload.email) return null;
+      let user = await this.adapter.getUserByEmail(payload.email, orgId);
+      if (!user) {
+        user = await this.adapter.createUser({
+          email: payload.email,
+          passwordHash: "SOCIAL_AUTH_EXTERNAL",
+          // Placeholder for social users
+          orgId,
+          role: "member"
+        });
+      }
+      return user;
+    } catch (error) {
+      console.error("[AUTH] Google Verification Failed:", error);
+      return null;
+    }
+  }
+};
+var OTPProvider = class {
+  constructor(adapter) {
+    this.adapter = adapter;
+  }
+  adapter;
+  id = "otp";
+  name = "OTP";
+  otpStore = /* @__PURE__ */ new Map();
+  async handleAction(action, body) {
+    if (action === "send") {
+      const otp = Math.floor(1e5 + Math.random() * 9e5).toString();
+      this.otpStore.set(body.email, { otp, expires: Date.now() + 3e5 });
+      if (process.env.RESEND_API_KEY) {
+        try {
+          await resend.emails.send({
+            from: "Navojit Auth <no-reply@navojit.io>",
+            // Apne verified domain se replace karein
+            to: body.email,
+            subject: "Your Security Code",
+            html: `<div style="font-family: sans-serif; padding: 20px;">
+                    <h2>Verification Code</h2>
+                    <p>Use the following code to sign in to your account:</p>
+                    <h1 style="color: #4F46E5;">${otp}</h1>
+                    <p>This code expires in 5 minutes.</p>
+                   </div>`
+          });
+        } catch (error) {
+          console.error("[AUTH] Email Delivery Failed:", error);
+        }
+      }
+      console.log(`[AUTH] OTP for ${body.email}: ${otp}`);
+      return { success: true, message: "OTP sent successfully" };
+    }
+    return { success: false, message: "Invalid action" };
+  }
+  async handle(body) {
+    const { email, otp, orgId } = body;
+    const record = this.otpStore.get(email);
+    if (record && record.otp === otp && record.expires > Date.now()) {
+      this.otpStore.delete(email);
+      return await this.adapter.getUserByEmail(email, orgId);
+    }
+    return null;
+  }
+};
+
+// src/adapters/express.ts
+function createExpressAuthRouter(authEngine) {
+  const { Router } = require("express");
+  const router = Router();
+  const { prefix } = authEngine.getConfig();
+  router.post(`${prefix}/otp/verify`, async (req, res) => {
+    try {
+      const result = await authEngine.verifyOtpCore(req.body.email, req.body.otp);
+      res.json({
+        ...result,
+        gateway: "navojit-v4-rust-express"
+      });
+    } catch (e) {
+      res.status(400).json({ error: e.message });
+    }
+  });
+  return router;
+}
+
+// src/adapters/nextjs.ts
+function createNextAuthHandler(authEngine) {
+  return {
+    async POST(req) {
+      const { NextResponse } = require("next/server");
+      try {
+        const body = await req.json();
+        if (!body.email || !body.otp) {
+          return NextResponse.json({ error: "Missing email or otp" }, { status: 400 });
+        }
+        const result = await authEngine.verifyOtpCore(body.email, body.otp);
+        return NextResponse.json({
+          ...result,
+          gateway: "navojit-v4-rust-nextjs"
+        });
+      } catch (e) {
+        return NextResponse.json({ error: e.message }, { status: 400 });
+      }
+    }
+  };
+}
+
+// src/adapters/fastify.ts
+function attachFastifyAuth(authEngine, server) {
+  const { prefix } = authEngine.getConfig();
+  server.post(`${prefix}/otp/verify`, async (req, reply) => {
+    try {
+      const result = await authEngine.verifyOtpCore(req.body.email, req.body.otp);
+      return { ...result, gateway: "navojit-v4-rust-fastify" };
+    } catch (e) {
+      return reply.code(400).send({ error: e.message });
+    }
+  });
+  server.addHook("preHandler", async (req, reply) => {
+    if (req.url?.startsWith(`${prefix}/profile`)) {
+      const token = req.headers.authorization?.split(" ")[1];
+      if (!token) return reply.code(401).send({ error: "Missing Token" });
+      const decoded = authEngine.verifyToken(token);
+      if (decoded.error) return reply.code(401).send({ error: decoded.error });
+      req.user = decoded;
+    }
+  });
+}
+
+// src/db/index.ts
+var import_postgres_js = require("drizzle-orm/postgres-js");
+var import_postgres = __toESM(require("postgres"));
+
+// src/db/schema.ts
+var schema_exports = {};
+__export(schema_exports, {
+  organizations: () => organizations,
+  refreshTokens: () => refreshTokens,
+  roleEnum: () => roleEnum,
+  users: () => users
+});
+var import_pg_core = require("drizzle-orm/pg-core");
+var roleEnum = (0, import_pg_core.pgEnum)("role", ["owner", "admin", "member", "guest"]);
+var organizations = (0, import_pg_core.pgTable)("organizations", {
+  id: (0, import_pg_core.uuid)("id").primaryKey().defaultRandom(),
+  name: (0, import_pg_core.varchar)("name", { length: 255 }).notNull(),
+  slug: (0, import_pg_core.varchar)("slug", { length: 255 }).unique().notNull(),
+  createdAt: (0, import_pg_core.timestamp)("created_at").defaultNow().notNull()
+});
+var users = (0, import_pg_core.pgTable)("users", {
+  id: (0, import_pg_core.uuid)("id").primaryKey().defaultRandom(),
+  orgId: (0, import_pg_core.uuid)("org_id").references(() => organizations.id).notNull(),
+  email: (0, import_pg_core.varchar)("email", { length: 255 }).unique().notNull(),
+  passwordHash: (0, import_pg_core.varchar)("password_hash", { length: 255 }).notNull(),
+  role: roleEnum("role").default("member").notNull(),
+  createdAt: (0, import_pg_core.timestamp)("created_at").defaultNow().notNull()
+});
+var refreshTokens = (0, import_pg_core.pgTable)("refresh_tokens", {
+  id: (0, import_pg_core.uuid)("id").primaryKey().defaultRandom(),
+  userId: (0, import_pg_core.uuid)("user_id").references(() => users.id).notNull(),
+  token: (0, import_pg_core.varchar)("token", { length: 500 }).unique().notNull(),
+  revoked: (0, import_pg_core.boolean)("revoked").default(false).notNull(),
+  expiresAt: (0, import_pg_core.timestamp)("expires_at").notNull()
+});
+
+// src/db/index.ts
+var dotenv = __toESM(require("dotenv"));
+dotenv.config();
+var client = (0, import_postgres.default)(process.env.DATABASE_URL, { max: 1 });
+var db = (0, import_postgres_js.drizzle)(client, { schema: schema_exports });
+
+// src/adapters/drizzle.ts
+var import_drizzle_orm = require("drizzle-orm");
+var DrizzleAdapter = class {
+  async getUserByEmail(email, orgId) {
+    const result = await db.select().from(users).where((0, import_drizzle_orm.and)((0, import_drizzle_orm.eq)(users.email, email), (0, import_drizzle_orm.eq)(users.orgId, orgId))).limit(1);
+    return result[0] || null;
+  }
+  async createUser(data) {
+    const [newUser] = await db.insert(users).values({
+      email: data.email,
+      passwordHash: data.passwordHash,
+      orgId: data.orgId,
+      role: data.role
+    }).returning();
+    return newUser;
+  }
+};
+
+// src/index.ts
 var MongooseAdapter = class {
   constructor(model) {
     this.model = model;
@@ -899,6 +1086,13 @@ var MongooseAdapter = class {
 };
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  CredentialsProvider,
+  DrizzleAdapter,
+  GoogleProvider,
   MongooseAdapter,
-  NavojitAuth
+  NavojitAuth,
+  OTPProvider,
+  attachFastifyAuth,
+  createExpressAuthRouter,
+  createNextAuthHandler
 });
